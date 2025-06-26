@@ -932,7 +932,13 @@ struct iprange *set_range (char *word, char *value, struct iprange *in)
         free (ipr);
         return NULL;
     }
+
+#ifdef __ANDROID__
+    memmove(&ipr->start, hp->h_addr, sizeof (unsigned int));
+#else
     bcopy (hp->h_addr, &ipr->start, sizeof (unsigned int));
+#endif
+
     if (c)
     {
 		char ip_hi[16];
@@ -964,7 +970,12 @@ struct iprange *set_range (char *word, char *value, struct iprange *in)
             free (ipr);
             return NULL;
         }
+      
+#ifdef __ANDROID__
+        memmove(&ipr->end, hp->h_addr, sizeof (unsigned int));
+#else
         bcopy (hp->h_addr, &ipr->end, sizeof (unsigned int));
+#endif
     }
     else
         ipr->end = ipr->start;
@@ -1089,7 +1100,13 @@ int set_ip (char *word, char *value, unsigned int *addr)
                   __FUNCTION__, value);
         return -1;
     }
+
+#ifdef __ANDROID__
+    memmove(addr, hp->h_addr, sizeof (unsigned int));
+#else
     bcopy (hp->h_addr, addr, sizeof (unsigned int));
+#endif
+
     return 0;
 }
 

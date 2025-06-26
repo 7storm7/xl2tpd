@@ -39,7 +39,26 @@ typedef unsigned long long _u64;
 #include "common.h"
 #include "ipsecmast.h"
 
-#define CONTROL_PIPE "/var/run/xl2tpd/l2tp-control"
+
+#ifdef __ANDROID__
+#include <sys/system_properties.h>
+#include <limits.h>
+
+#define CONTROL_PIPE_PROP "xl2tpd.control_pipe"
+
+#define DEFAULT_CONTROL_PIPE "/data/local/tmp/l2tp-control"
+//#define CONTROL_PIPE "/data/local/tmp/l2tp-control"
+#else
+#define DEFAULT_CONTROL_PIPE "/var/run/xl2tpd/l2tp-control"
+//#define CONTROL_PIPE "/var/run/xl2tpd/l2tp-control"
+#endif
+
+// Declaration of the global variable (no initializer here)
+extern const char* CONTROL_PIPE;
+
+// Declaration of the function that returns the path
+const char* get_control_pipe(void); // Good practice to use void for no arguments
+
 #define CONTROL_PIPE_MESSAGE_SIZE 1024
 #define UNUSED(x) (void)(x)
 

@@ -1158,7 +1158,13 @@ int challenge_avp (struct tunnel *t, struct call *c, void *data, int datalen)
     {
         return -ENOMEM;
     }
-    bcopy (&raw[3].s, (t->chal_us.challenge), size);
+
+#ifdef __ANDROID__
+    memmove(t->chal_us.challenge, &raw[3].s, size);
+#else
+    bcopy(&raw[3].s, t->chal_us.challenge, size);
+#endif
+
     t->chal_us.chal_len = size;
     t->chal_us.state = STATE_CHALLENGED;
     if (gconfig.debug_avp)
@@ -1210,7 +1216,12 @@ int chalresp_avp (struct tunnel *t, struct call *c, void *data, int datalen)
         return -EINVAL;
     }
 
+#ifdef __ANDROID__
+    memmove(t->chal_them.reply, &raw[3].s, MD_SIG_SIZE);
+#else
     bcopy (&raw[3].s, t->chal_them.reply, MD_SIG_SIZE);
+#endif
+
     if (gconfig.debug_avp)
     {
         l2tp_log (LOG_DEBUG, "%s: Challenge reply found\n", __FUNCTION__);

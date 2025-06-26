@@ -1663,6 +1663,9 @@ static void init_args(int argc, char *argv[])
 {
     int i=0;
 
+    // Get the control pipe path and store it in the global variable
+    CONTROL_PIPE = get_control_pipe();
+
     gconfig.daemon=1;
     gconfig.syslog=-1;
     memset(gconfig.altauthfile,0,STRLEN);

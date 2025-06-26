@@ -35,12 +35,12 @@
 
 #endif /* defined(SOLARIS) */
 
-#if !defined(LINUX)
-
-/* Declare empty structure to make code portable and keep simple */
+#if !defined(__linux__) && !defined(__ANDROID__)
 struct in_pktinfo {
+    unsigned int ipi_ifindex;
+    struct in_addr ipi_spec_dst;
+    struct in_addr ipi_addr;
 };
-
 #endif
 
 #if defined __UCLIBC__ && !defined UCLIBC_SUSV3_LEGACY_MACROS

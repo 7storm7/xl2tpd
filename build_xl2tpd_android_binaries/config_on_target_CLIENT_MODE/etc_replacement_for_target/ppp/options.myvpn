@@ -1,0 +1,49 @@
+# PPP options for L2TP client connection: myvpn
+# Referenced by xl2tpd.conf's 'pppoptfile' for the 'myvpn' LAC.
+
+# Essential Client Options:
+noipdefault             # Don't use the client's local IP, obtain from server.
+usepeerdns              # IMPORTANT: Obtain DNS server addresses from the remote PPP server.
+defaultroute            # Add default route through this PPP interface once connected.
+persist                 # Keep trying to connect even if initial attempts fail or connection drops.
+                        # Combine with 'maxfail' or xl2tpd's redial options.
+# maxfail 0             # Try indefinitely to connect (use with caution, especially on mobile data).
+holdoff 10              # Wait 10 seconds between connection attempts if persist is used.
+
+# Authentication:
+# User name for authentication on the remote server.
+# This MUST match an entry in your /data/local/tmp/my_xl2tpd_client_configs/ppp/chap-secrets
+user "a"
+# refuse-pap            # Don't offer PAP authentication (less secure).
+# refuse-chap           # If you only want to use MS-CHAPv2 (server must support it).
+require-mschap-v2       # Prefer/require MS-CHAPv2 if the server supports it (more secure).
+# require-chap          # Fallback if MS-CHAPv2 is not an option.
+
+# Security/Encryption (MPPE is often used with MS-CHAPv2):
+# nomppe                # Disable MPPE if not needed or causing issues.
+# require-mppe          # Require MPPE encryption.
+# require-mppe-128      # Require 128-bit MPPE. Server must support.
+
+# MTU/MRU Settings to avoid fragmentation, especially over L2TP/IPsec
+mtu 1280                # Max Transmission Unit for outgoing packets.
+mru 1280                # Max Receive Unit for incoming packets.
+
+# Compression (usually best to disable unless specifically needed and tested)
+# nobsdcomp
+# nodeflate
+# novj
+# novjccomp
+
+# Logging/Debugging for pppd (can be verbose)
+# debug                 # Enable pppd debugging.
+# logfd 2               # Log to stderr (useful if running pppd from a script that captures output).
+# logfile /data/local/tmp/my_xl2tpd_client_configs/ppp-myvpn.log # Log to a file (ensure path is writable).
+
+# Other options
+# connect /bin/true     # Dummy connect script if needed by some pppd versions (rarely).
+# nodetach              # Don't detach from terminal (useful for debugging pppd startup).
+# updetach              # Detach after connection is up.
+# ipcp-accept-local     # Accept server's idea of our local IP even if we suggested one.
+# ipcp-accept-remote    # Accept server's idea of its remote IP.
+# lcp-echo-interval 30  # Send LCP echo requests every 30 seconds to keep connection alive.
+# lcp-echo-failure 4    # Consider link down after 4 failed LCP echos.

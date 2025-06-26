@@ -1,0 +1,108 @@
+This file provides guidance for setting up and running xl2tpd in CLIENT MODE
+on the Android target device.
+
+*******************************************************************************
+*** L2TP Client Mode - Android Device Connects OUT to a Remote L2TP Server  ***
+*******************************************************************************
+
+Configuration Files Overview (to be pushed to target, e.g., to '/data/local/tmp/my_xl2tpd_client_configs'):
+1.  xl2tpd.conf:
+    - Contains the [global] section.
+    - Contains one or more [lac myvpn] sections, each defining a connection
+      to a remote L2TP server (LNS). The section name (e.g., "myvpn") is used
+      to initiate the connection via the control file.
+    - Path on target (example): /data/local/tmp/my_xl2tpd_client_configs/xl2tpd/xl2tpd.conf
+
+2.  options.myvpn (PPP Options File):
+    - One per [lac ...] section, named to match the 'pppoptfile' directive in xl2tpd.conf.
+    - Contains pppd settings for the outgoing client connection (user, auth methods, DNS, routes).
+    - Path on target (example): /data/local/tmp/my_xl2tpd_client_configs/ppp/options.myvpn
+
+3.  chap-secrets:
+    - Stores the username/password credentials used by this Android client to
+      authenticate itself TO THE REMOTE L2TP SERVER.
+    - Path on target (example): /data/local/tmp/my_xl2tpd_client_configs/ppp/chap-secrets
+      (pppd needs to be able to find this. If not in a default pppd path, ensure pppd is configured
+       to look here, possibly via an 'authfile' directive in the options file, though often pppd
+       checks its default /etc/ppp/chap-secrets or a path relative to its execution).
+
+Deployment and Execution Steps on Target Android Device (usually via 'adb shell' with root):
+
+A. Push Configuration Files:
+   Push the contents of the generated '/home/uze5fy/MY/REPOS/xl2tpd/build_xl2tpd_android_binaries/config_on_target_CLIENT_MODE/etc_replacement_for_target' directory (which contains 'xl2tpd'
+   and 'ppp' subdirectories) to your chosen base configuration path on the target.
+   Example using your chosen target base path '/data/local/tmp/my_xl2tpd_client_configs':
+   adb push "/home/uze5fy/MY/REPOS/xl2tpd/build_xl2tpd_android_binaries/config_on_target_CLIENT_MODE/etc_replacement_for_target/." "/data/local/tmp/my_xl2tpd_client_configs/"
+
+   This should create files like:
+     /data/local/tmp/my_xl2tpd_client_configs/xl2tpd/xl2tpd.conf
+     /data/local/tmp/my_xl2tpd_client_configs/ppp/options.myvpn
+     /data/local/tmp/my_xl2tpd_client_configs/ppp/chap-secrets
+
+B. Ensure xl2tpd and pppd Paths and Permissions:
+   - Make sure your cross-compiled 'xl2tpd' and 'pppd' binaries are on the Android device
+     (e.g., in /data/local/tmp/) and are executable (`chmod +x /data/local/tmp/xl2tpd` `chmod +x /data/local/tmp/pppd`).
+   - xl2tpd needs to be able to read its config file and write to its control file (if not using /var/run default).
+   - pppd (called by xl2tpd) needs to read its options file and the chap-secrets file.
+
+C. Start xl2tpd Daemon:
+   Run your cross-compiled xl2tpd binary. It's often best to run it in the foreground
+   with debugging initially to see logs.
+   Example (ensure paths to binary, config, and control file are correct):
+
+   /data/local/tmp/xl2tpd \
+     -c /data/local/tmp/my_xl2tpd_client_configs/xl2tpd/xl2tpd.conf \
+     -C /data/local/tmp/l2tp-control \
+     -D
+
+   Flags:
+     -c /path/to/xl2tpd.conf   : Specifies the configuration file.
+     -C /path/to/control_file  : Specifies the control file path.
+                                  This MUST match the path you use with 'echo "c..."'.
+     -D                        : Run in foreground with debug output to stdout/stderr.
+                                  Remove for background operation once tested.
+
+D. Initiate the L2TP Connection:
+   Once xl2tpd is running and listening to its control file, open another 'adb shell' or use '&'
+   to background the daemon, then send the connect command to the control file.
+   The connection name ('myvpn' in this example) MUST match a [lac <name>]
+   section in your xl2tpd.conf.
+
+   echo "c myvpn" > /data/local/tmp/l2tp-control
+
+   Example: echo "c myvpn" > /data/local/tmp/l2tp-control
+
+E. Check Connection Status & Logs:
+   - Look at the debug output of xl2tpd (if running with -D).
+   - After connection, a 'ppp0' (or similar) interface should appear. Check with:
+     ip addr show ppp0
+     ifconfig ppp0
+   - Check routing table to see if a default route via ppp0 is added (if 'defaultroute' in PPP options):
+     ip route
+   - Test connectivity:
+     ping -I ppp0 8.8.8.8  # Or ping an IP on the remote VPN network
+   - pppd logs: If you configured a log file in the PPP options file (e.g., options.myvpn),
+     check that file for pppd specific messages. Example:
+     # logfile /data/local/tmp/my_xl2tpd_client_configs/ppp-myvpn.log (in options file)
+     Then on device: cat /data/local/tmp/my_xl2tpd_client_configs/ppp-myvpn.log
+
+F. Disconnect:
+   To disconnect the specific L2TP session:
+   echo "d myvpn" > /data/local/tmp/l2tp-control
+
+   To shut down the xl2tpd daemon (if running in background):
+   Find its PID (ps -ef | grep xl2tpd or pgrep xl2tpd) and then 'kill <PID>'.
+   If it was started with -C and supports it, you can also try:
+   echo "shutdown" > /data/local/tmp/l2tp-control (This might not always work reliably)
+
+IPsec Note:
+This setup assumes L2TP is running either standalone (unencrypted, not recommended over public internet)
+or that L2TP is running over an IPsec tunnel that is established SEPARATELY (e.g., by strongSwan
+or another IPsec daemon on the Android device). This script system DOES NOT configure IPsec.
+If IPsec is required for your connection, the IPsec tunnel must be established *first*
+between the Android device and the remote server. xl2tpd then runs L2TP *inside* that
+already established secure IPsec tunnel. The 'lns = <server_ip>' in your xl2tpd.conf
+would typically be the remote server's private IP address at the other end of the IPsec
+tunnel, or its public IP if IPsec is in transport mode and xl2tpd is configured to
+bind to the IPsec-protected traffic. This script system does not set up IPsec.
+

@@ -677,7 +677,13 @@ struct call *get_call (int tunnel, int call,  struct in_addr addr, int port,
 	st->refhim = refhim;
         st->udp_fd = -1;
         st->pppox_fd = -1;
+
+#ifdef __ANDROID__
+        memmove(&st->peer.sin_addr, &addr, sizeof (addr));
+#else
         bcopy (&addr, &st->peer.sin_addr, sizeof (addr));
+#endif
+
         st->next = tunnels.head;
         tunnels.head = st;
         tunnels.count++;
