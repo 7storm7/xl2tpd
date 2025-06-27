@@ -142,7 +142,7 @@ int main (int argc, char *argv[])
     }
 
     if (!control_filename) {
-        control_filename = strdup (CONTROL_PIPE);
+        control_filename = strdup (get_control_pipe());
     }
 
     /* parse command name */

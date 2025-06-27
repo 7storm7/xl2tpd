@@ -8,9 +8,6 @@
 #include <limits.h>
 #endif
 
-// Definition of the global variable (no initializer here either yet)
-const char* CONTROL_PIPE = NULL; // Initialize to NULL or a sensible default if appropriate
-
 const char* get_control_pipe(void) {
 #ifdef __ANDROID__
     static char control_pipe_value[PROP_VALUE_MAX];

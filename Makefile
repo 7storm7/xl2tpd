@@ -92,7 +92,7 @@ CFLAGS += -fPIC --sysroot=$(SYSROOT)
 endif
 
 HDRS=l2tp.h avp.h misc.h control.h call.h scheduler.h file.h aaa.h md5.h
-OBJS=xl2tpd.o pty.o misc.o control.o avp.o call.o network.o avpsend.o scheduler.o file.o aaa.o md5.o l2tp.o
+OBJS=xl2tpd.o pty.o misc.o control.o avp.o call.o network.o avpsend.o scheduler.o file.o aaa.o md5.o control-pipe.o
 SRCS=${OBJS:.o=.c} ${HDRS}
 #LIBS= $(OSLIBS) # -lefence # efence for malloc checking
 EXEC=xl2tpd
@@ -100,7 +100,7 @@ EXEC=xl2tpd
 BINDIR?=/usr/sbin
 MANDIR?=/usr/share/man
 
-CONTROL_SRCS=xl2tpd-control.c
+CONTROL_SRCS=xl2tpd-control.c control-pipe.c
 CONTROL_EXEC=xl2tpd-control
 
 all: $(EXEC) $(CONTROL_EXEC)
